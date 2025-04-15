@@ -3,10 +3,12 @@
 #include <time.h>
 
 #include "OlonTimezones.h"
-#ifdef ESP8266
-#include <coredecls.h>  // settimeofday_cb()
-#else
-#include "esp_sntp.h"  // sntp_set_time_sync_notification_cb()
+#if defined(ESP8266)
+  #include <coredecls.h>  // settimeofday_cb()
+  // #include <sntp.h>
+#elif defined(ESP32)
+  #include "esp_sntp.h"  // sntp_set_time_sync_notification_cb()
+  // #include <lwip/apps/sntp.h>
 #endif
 
 #define TAG "NTP"
@@ -26,11 +28,11 @@
       Serial.printf(format "\033[0m\n", ##__VA_ARGS__); }
   #define LOGBULK(...) Serial.printf(PSTR("%s"), ##__VA_ARGS__);
 #else
-#define LOGD(tag, format, ...)
-#define LOGI(tag, format, ...)
-#define LOGW(tag, format, ...)
-#define LOGE(tag, format, ...)
-#define LOGBULK(...)
+  #define LOGD(tag, format, ...)
+  #define LOGI(tag, format, ...)
+  #define LOGW(tag, format, ...)
+  #define LOGE(tag, format, ...)
+  #define LOGBULK(...)
 #endif
 
 Olon::NtpClass* Olon::NtpClass::_instance = nullptr;
@@ -56,7 +58,7 @@ void Olon::NtpClass::onSync() {
 }
 
 void Olon::NtpClass::setServer(const char* ntpServer1, const char* ntpServer2) {
-// confugure callbacks
+// configure callbacks
 #ifdef ESP8266
   settimeofday_cb([this]() { onSync(); });
 #else
@@ -68,6 +70,7 @@ void Olon::NtpClass::setServer(const char* ntpServer1, const char* ntpServer2) {
 
   LOGI(TAG, "Setup server 1: %s Server 2: %s", ntpServer1, ntpServer2);
   configTime(0, 0, ntpServer1, ntpServer2);
+  // sntp_init();
   _timezoneCount = sizeof(timezones) / sizeof(timezones[0]);
 }
 

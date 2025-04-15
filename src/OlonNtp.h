@@ -2,7 +2,7 @@
 
 namespace Olon {
 
-typedef std::function<void()> NtpEventCb;
+using NtpEventCb = std::function<void()>;
 
 class NtpClass {
  public:
