@@ -1,11 +1,12 @@
 #include <Arduino.h>
+#include <functional>  // Needed for std::function
 
 namespace Olon {
 
-using NtpEventCb = std::function<void()>;
-
 class NtpClass {
  public:
+  using OnSyncCallback = std::function<void()>;
+
   NtpClass();
   void setServer(const char* ntpServer1, const char* ntpServer2);
   void setLocation(const char* location);
@@ -14,14 +15,19 @@ class NtpClass {
   uint16_t timeZonesCount() { return _timezoneCount; };
   const char* getLocationAtIndex(uint32_t index);
   String getFullDateTimePretty();
-  void registerEventCallback(NtpEventCb callback);
+
+  void onSync(OnSyncCallback callback) {
+    _onSyncCallback = callback;
+  }
+
   bool synced = false;
+
  private:
-  void onSync();
+  OnSyncCallback _onSyncCallback = nullptr;
+  void syncCallbackTrigger();
   static NtpClass* _instance;
   uint16_t _timezoneCount = 0;
   static void timeSyncCallback(struct timeval *tv);
-  std::vector<NtpEventCb> _cbEventList;
 };
 
 } // namespace Olon

@@ -39,28 +39,25 @@ Olon::NtpClass* Olon::NtpClass::_instance = nullptr;
 
 void Olon::NtpClass::timeSyncCallback(struct timeval* tv) {
   if (_instance) {
-    _instance->onSync();  // Call the member function onSync() directly
+    _instance->syncCallbackTrigger();  // Call the member function syncCallbackTrigger() directly
   }
 }
 
 Olon::NtpClass::NtpClass() { _instance = this; }
 
-void Olon::NtpClass::onSync() {
+void Olon::NtpClass::syncCallbackTrigger() {
   synced = true;
   String tm = getFullDateTimePretty();
   LOGI(TAG, "Time synced: %s", tm.c_str());
-  for (uint8_t i = 0; i < _cbEventList.size(); i++) {
-    NtpEventCb event = _cbEventList[i];
-    if (event) {
-      event();
-    }
+  if (_onSyncCallback) {
+    _onSyncCallback();
   }
 }
 
 void Olon::NtpClass::setServer(const char* ntpServer1, const char* ntpServer2) {
 // configure callbacks
 #ifdef ESP8266
-  settimeofday_cb([this]() { onSync(); });
+  settimeofday_cb([this]() { syncCallbackTrigger(); });
 #else
   // https://techtutorialsx.com/2021/09/03/esp32-sntp-additional-features/
   sntp_set_time_sync_notification_cb(timeSyncCallback);
@@ -118,12 +115,6 @@ String Olon::NtpClass::getFullDateTimePretty() {
     // return asctime(&timeinfo);
   };
   return "Time not set";
-}
-
-void Olon::NtpClass::registerEventCallback(NtpEventCb callback) {
-  if (callback) {
-    _cbEventList.push_back(callback);
-  }
 }
 
 // void NtpClass::loop() {
